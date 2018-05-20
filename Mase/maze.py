@@ -41,41 +41,31 @@ class Maze:
                col >= 0 and col < self.num_cols(), "Cell index out of range."
         self._exitCell = _CellPosition(row, col)
 
-    # # Attempts to solve the maze by finding a path from the starting cell
-    # # to the exit. Returns True if a path is found and False otherwise.
-    # def findPath(self):
-    #     pass
-    #
-    # # Resets the maze by removing all "path" and "tried" tokens.
-    # def reset(self):0
-    #     pass
-    #
-    # # Prints a text-based representation of the maze.
-    # def draw(self):
-    #     pass
-
     def findPath(self):
         path_stack = Stack()
-        cur_cell = self._startCell
-        path_stack.push(self._startCell)
-        self._markPath(cur_cell.row, cur_cell.col)
+        new = self._startCell
+        path_stack.push(new)
 
         while len(path_stack) != 0:
-            flag_valid = 0
-            new_row = cur_cell.row
-            new_col = cur_cell.col
-            for i, j in [(1, 0), (-1, 0), (0, -1), (0, 1)]:
-                if self._validMove(new_row + i, new_col + j):
-                    path_stack.push(_CellPosition(new_row + i, new_col + j))
-                    self._markPath(new_row + i, new_col + j)
-                    flag_valid += 1
+            new.row = path_stack.peek().row
+            new.col = path_stack.peek().col
+            self._markPath(new.row, new.col)
+            flag_valid = False
+            for i, j in [(-1, 0), (0, 1), (1, 0), (0, -1)]:
+                if self._validMove(path_stack.peek().row + i, path_stack.peek().col + j):
+                    new.row = new.row + i
+                    new.col = new.col + j
+                    path_stack.push(_CellPosition(new.row, new.col))
+                    self._markPath(new.row, new.col)
+                    flag_valid = True
                     break
-            if flag_valid is 0:
-                pop_cell = path_stack.pop()
-                self._markTried(pop_cell.col, pop_cell.row)
-            cur_cell = path_stack.peek()
-            if self._exitFound(cur_cell.row, cur_cell.col):
-                return True
+            if flag_valid:
+                if self._exitFound(new.row, new.col):
+                    self._markPath(new.row, new.col)
+                    return True
+                continue
+            cell = path_stack.pop()
+            self._markTried(cell.row, cell.col)
         return False
 
     # Resets the maze by removing all "path" and "tried" tokens
@@ -84,16 +74,15 @@ class Maze:
             for col in range(self.num_cols()):
                 cur_cell = self._mazeCells[row, col]
                 if cur_cell == (self.TRIED_TOKEN or self.PATH_TOKEN):
-                    self._mazeCells[row, col] = ' '
+                    self._mazeCells[row, col] = None
 
     # Prints a text-based representation of the maze.
     def draw(self):
         for row in range(self.num_rows()):
             for col in range(self.num_cols()):
-                if self._mazeCells[row, col] is not None:
-                    print(self._mazeCells[row, col], end='')
-                else:
-                    print(' ')
+                if self._mazeCells[row, col] is None:
+                    self._mazeCells[row, col] = '  '
+                print(self._mazeCells[row, col], end='')
             print('')
 
     # Returns True if the given cell position is a valid move.
